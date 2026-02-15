@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- (1) TITLE (z IP serwera) -->
+  <title>FepBox.pl — Serwer Minecraft</title>
+
+  <!-- (2) FAVICON: podmień ścieżkę na swoją -->
+  <link rel="icon" type="image/png" href="FepBox.png" />
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --card: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.70);
+      --accent: #6ee7ff;
+      --accent2:#a78bfa;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --maxw: 1100px;
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 15% 10%, rgba(110,231,255,0.18), transparent 55%),
+        radial-gradient(900px 650px at 80% 25%, rgba(167,139,250,0.18), transparent 60%),
+        radial-gradient(900px 650px at 40% 90%, rgba(34,197,94,0.10), transparent 55%),
+        var(--bg);
+      min-height:100vh;
+    }
+
+    /* Topbar */
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(11,16,32,0.55);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner{
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      min-width: 220px;
+    }
+
+    /* (3) MIEJSCE NA LOGO */
+    .logo-wrap{
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      box-shadow: var(--shadow);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+    }
+    .logo-wrap img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display:block;
+    }
+    .logo-placeholder{
+      font-weight: 800;
+      letter-spacing: .5px;
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+    }
+
+    .brand-text{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+    .brand-name{
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+    .brand-sub{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    nav{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav-link{
+      text-decoration:none;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      transition: .18s ease;
+      font-weight: 650;
+      font-size: 14px;
+    }
+    .nav-link:hover{
+      color: var(--text);
+      border-color: var(--border);
+      background: rgba(255,255,255,0.05);
+    }
+    .nav-link.active{
+      color: var(--text);
+      border-color: rgba(110,231,255,0.35);
+      background: linear-gradient(135deg, rgba(110,231,255,0.12), rgba(167,139,250,0.10));
+    }
+
+    /* Layout */
+    .container{
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 28px 18px 64px;
+    }
+
+    .hero{
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border-radius: calc(var(--radius) + 6px);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(500px 200px at 20% 20%, rgba(110,231,255,0.18), transparent 60%),
+        radial-gradient(450px 240px at 80% 30%, rgba(167,139,250,0.16), transparent 65%);
+      pointer-events:none;
+      opacity: .9;
+    }
+
+    .hero-grid{
+      position: relative;
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      align-items: center;
+    }
+    @media (max-width: 860px){
+      .hero-grid{ grid-template-columns: 1fr; }
+    }
+
+    .hero h1{
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+      letter-spacing: -0.6px;
+    }
+    .hero p{
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 60ch;
+    }
+
+    /* DUŻE IP */
+    .ip-box{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      border: 1px solid rgba(110,231,255,0.28);
+      background: rgba(0,0,0,0.22);
+      border-radius: 16px;
+      padding: 14px 16px;
+      max-width: 520px;
+    }
+    .ip{
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 900;
+      letter-spacing: .6px;
+      text-shadow: 0 8px 30px rgba(110,231,255,0.12);
+      user-select: all;
+    }
+    .btn{
+      cursor:pointer;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 750;
+      transition: .18s ease;
+      white-space: nowrap;
+      text-decoration: none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(110,231,255,0.35);
+      background: rgba(255,255,255,0.09);
+    }
+    .hint{
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.62);
+    }
+
+    .side-card{
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      border-radius: 18px;
+      padding: 18px;
+    }
+    .side-card h3{
+      margin: 0 0 10px;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+    .badge-row{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .badge{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+    }
+
+    /* Status serwera */
+    .status-card{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .status-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .status-title{
+      font-weight: 800;
+      letter-spacing: .2px;
+      font-size: 14px;
+    }
+    .pill{
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.85);
+    }
+    .pill.online{
+      border-color: rgba(34,197,94,0.45);
+      background: rgba(34,197,94,0.12);
+    }
+    .pill.offline{
+      border-color: rgba(239,68,68,0.45);
+      background: rgba(239,68,68,0.12);
+    }
+    .status-metrics{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .metric{
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .metric-label{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .metric-value{
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+    .status-actions{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .status-note{
+      font-size: 12px;
+      color: rgba(255,255,255,0.60);
+    }
+
+    section{
+      margin-top: 26px;
+      padding-top: 72px; /* offset pod sticky nav */
+    }
+    .section-card{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    .section-card h2{
+      margin: 0 0 8px;
+      font-size: 22px;
+      letter-spacing: -0.2px;
+    }
+    .section-card p{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .grid-2{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 860px){
+      .grid-2{ grid-template-columns: 1fr; }
+    }
+
+    .mini{
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .mini h4{
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+    .mini ul{
+      margin: 0;
+      padding-left: 18px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.65;
+    }
+
+    footer{
+      margin-top: 38px;
+      color: rgba(255,255,255,0.55);
+      font-size: 12px;
+      text-align:center;
+      padding: 22px 0 6px;
+    }
+    .toast{
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.65);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.9);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events:none;
+      transition: .2s ease;
+    }
+    .toast.show{ opacity: 1; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo-wrap" aria-label="Logo serwera">
+          <!-- (4) Wklej swoje logo:
+               1) Usuń <div class="logo-placeholder">LOGO</div>
+               2) Odkomentuj <img ...> i ustaw src
+          -->
+          <img src="FepBox.png" alt="FepBox Logo"/>
+        </div>
+        <div class="brand-text">
+          <div class="brand-name">FepBox</div>
+          <div class="brand-sub">Serwer Minecraft • IP: FepBox.pl</div>
+        </div>
+      </div>
+
+      <nav aria-label="Nawigacja strony">
+        <a class="nav-link active" href="#home">Strona główna</a>
+        <a class="nav-link" href="#shop">Sklep</a>
+        <a class="nav-link" href="#discord">Discord</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HERO / STRONA GŁÓWNA -->
+    <div class="hero" id="home">
+      <div class="hero-grid">
+        <div>
+          <h1>Dołącz do FepBox</h1>
+          <p>
+            Nowoczesny serwer Minecraft z klimatem community, dopracowanym gameplayem i eventami.
+            Wbijaj, buduj i baw się razem z nami!
+          </p>
+
+          <div class="ip-box" role="group" aria-label="IP serwera">
+            <div class="ip" id="server-ip">FepBox.pl</div>
+            <button class="btn" id="copy-ip" type="button">Kopiuj IP</button>
+          </div>
+          <div class="hint">Kliknij „Kopiuj IP” albo zaznacz i skopiuj ręcznie.</div>
+        </div>
+
+        <aside class="side-card" aria-label="Szybkie info">
+          <h3>Szybki start</h3>
+          <div class="badge-row">
+            <span class="badge">BoxPvp</span>
+            <span class="badge">Anarchia (Pracujemy nad tym)</span>
+          </div>
+
+          <div style="height:12px"></div>
+          <p style="margin:0;color:var(--muted);line-height:1.6;">
+            Ustaw IP <strong>FepBox.pl</strong> w launcherze i dołącz już teraz.
+          </p>
+
+          <div style="height:14px"></div>
+
+          <!-- STATUS SERWERA + LICZBA GRACZY -->
+          <div class="status-card" aria-label="Status serwera">
+            <div class="status-row">
+              <div class="status-title">Status serwera</div>
+              <span class="pill" id="srv-pill">Sprawdzam…</span>
+            </div>
+
+            <div class="status-metrics">
+              <div class="metric">
+                <div class="metric-label">Gracze</div>
+                <div class="metric-value" id="srv-players">— / —</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Wersja</div>
+                <div class="metric-value" id="srv-version">—</div>
+              </div>
+            </div>
+
+            <div class="status-actions">
+              <button class="btn" type="button" id="srv-refresh">Odśwież</button>
+              <span class="status-note" id="srv-updated">—</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- SKLEP -->
+    <section id="shop" aria-label="Sklep">
+      <div class="section-card">
+        <h2>Sklep</h2>
+        <p>
+          Aby zakupić range/klucze musisz doładować portfel Minecraft po czym zakupić itemki pod komenda /portfel
+        </p>
+
+        <div class="grid-2">
+          <div class="mini">
+            <h4>Rangi / Pakiety</h4>
+            <ul>
+              <li>Ranga VIP / SVIP / ELITA / FEP</li>
+              <li>Klucze do skrzynek</li>
+            </ul>
+          </div>
+          <div class="mini">
+            <h4>Link do sklepu</h4>
+            <p style="margin:0;color:var(--muted);line-height:1.7;">
+              Klinknij aby przejść do sklepu
+            </p>
+            <div style="height:10px"></div>
+            <a class="btn" href="https://sklep.fepbox.pl" target="_blank" rel="noreferrer">Przejdź do sklepu</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DISCORD -->
+    <section id="discord" aria-label="Discord">
+      <div class="section-card">
+        <h2>Discord</h2>
+        <p>
+          Dołącz na Discorda, żeby dostać ogłoszenia, wziąć udział w eventach i szybko złapać kontakt z administracją.
+        </p>
+
+        <div class="grid-2">
+          <div class="mini">
+            <h4>Zaproszenie</h4>
+            <p style="margin:0;color:var(--muted);line-height:1.7;">
+              Klinknij aby dołączyć na discorda
+            </p>
+            <div style="height:10px"></div>
+            <a class="btn" href="https://discord.gg/fepbox" target="_blank" rel="noreferrer">Dołącz na Discord</a>
+          </div>
+
+          <div class="mini">
+            <h4>Widget (opcjonalnie)</h4>
+            <p style="margin:0;color:var(--muted);line-height:1.7;">
+              Jeśli chcesz, możesz wkleić oficjalny Discord Widget (iframe) po włączeniu go w ustawieniach serwera.
+            </p>
+            <div style="height:10px"></div>
+            <!-- Wklej tu iframe, jeśli używasz widgetu Discord -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      © <span id="year"></span> FepBox • IP: FepBox.pl
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // ====== Dynamiczny tytuł karty ======
+    const baseTitle = "FepBox.pl — Serwer Minecraft";
+    const awayTitle = "Czemu nas opuszczasz?";
+
+    document.title = baseTitle;
+
+    window.addEventListener("blur", () => {
+      document.title = awayTitle;
+    });
+
+    window.addEventListener("focus", () => {
+      document.title = baseTitle;
+    });
+
+    // ====== Kopiowanie IP ======
+    const ip = "FepBox.pl";
+    const copyBtn = document.getElementById("copy-ip");
+    const toast = document.getElementById("toast");
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    copyBtn.addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(ip);
+        showToast("Skopiowano IP: " + ip);
+      }catch(e){
+        // fallback
+        const tmp = document.createElement("textarea");
+        tmp.value = ip;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        tmp.remove();
+        showToast("Skopiowano IP: " + ip);
+      }
+    });
+
+    // ====== Aktywna sekcja w nawigacji (scroll spy) ======
+    const links = Array.from(document.querySelectorAll(".nav-link"));
+    const sections = links.map(a => document.querySelector(a.getAttribute("href")));
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter(e => e.isIntersecting)
+        .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+      if(!visible) return;
+
+      links.forEach(l => l.classList.remove("active"));
+      const activeLink = links.find(l => l.getAttribute("href") === "#" + visible.target.id);
+      if(activeLink) activeLink.classList.add("active");
+    }, { root: null, threshold: [0.25, 0.35, 0.5, 0.65] });
+
+    sections.forEach(s => s && observer.observe(s));
+
+    // ====== Rok w stopce ======
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ====== Status serwera + liczba graczy ======
+    // (7) Jeśli kiedyś zmienisz IP/port — edytuj tutaj:
+    const STATUS_IP = "FepBox.pl";
+    // const STATUS_PORT = 25565; // odkomentuj jeśli masz niestandardowy port
+
+    const elPill = document.getElementById("srv-pill");
+    const elPlayers = document.getElementById("srv-players");
+    const elVersion = document.getElementById("srv-version");
+    const elUpdated = document.getElementById("srv-updated");
+    const btnRefresh = document.getElementById("srv-refresh");
+
+    function setPill(state, text){
+      elPill.classList.remove("online", "offline");
+      if(state) elPill.classList.add(state);
+      elPill.textContent = text;
+    }
+
+    function fmtTime(){
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      const ss = String(d.getSeconds()).padStart(2,'0');
+      return `${hh}:${mm}:${ss}`;
+    }
+
+    async function fetchServerStatus(){
+      try{
+        setPill(null, "Sprawdzam…");
+
+        const url = new URL("https://mcapi.us/server/status");
+        url.searchParams.set("ip", STATUS_IP);
+        // url.searchParams.set("port", STATUS_PORT);
+
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        if(!data || data.status !== "success"){
+          throw new Error(data?.error || "Bad response");
+        }
+
+        if(data.online){
+          setPill("online", "ONLINE");
+          const now = data.players?.now ?? 0;
+          const max = data.players?.max ?? "—";
+          elPlayers.textContent = `${now} / ${max}`;
+          elVersion.textContent = "1.16 - 1.21";
+        }else{
+          setPill("offline", "OFFLINE");
+          elPlayers.textContent = `0 / —`;
+          elVersion.textContent = "—";
+        }
+
+        elUpdated.textContent = "Ostatnia aktualizacja: " + fmtTime();
+      }catch(err){
+        setPill("offline", "BŁĄD");
+        elPlayers.textContent = "— / —";
+        elVersion.textContent = "—";
+        elUpdated.textContent = "Nie udało się pobrać: " + fmtTime();
+      }
+    }
+
+    btnRefresh?.addEventListener("click", fetchServerStatus);
+    fetchServerStatus();
+    setInterval(fetchServerStatus, 60_000);
+  </script>
+</body>
+</html>
